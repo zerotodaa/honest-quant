@@ -3,90 +3,156 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The backtest said +profit. 438 independent samples said -$974. — zerotodaa</title>
-<meta name="description" content="A case study on catching overfit trading backtests before they cost real money — by a quant & trading-systems engineer.">
+<title>−$974 — zerotodaa / quant trading systems</title>
+<meta name="description" content="A backtest looked +profit on 140 trades and lost $974 on 438. How I catch overfit trading strategies before they reach live capital.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@500;700&family=Space+Grotesk:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0b0e14;--card:#11151f;--ink:#e6e9ef;--mut:#9aa4b2;--acc:#5b9dff;--good:#3fcf8e;--bad:#ff6b6b;--line:#222838}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:760px;margin:0 auto;padding:56px 22px 90px}
-  .eyebrow{color:var(--acc);font-weight:600;letter-spacing:.02em;font-size:14px;text-transform:uppercase}
-  h1{font-size:36px;line-height:1.18;margin:10px 0 14px;letter-spacing:-.02em}
-  h2{font-size:22px;margin:44px 0 12px;letter-spacing:-.01em}
-  .lede{color:var(--mut);font-size:19px;margin:0 0 8px}
-  p{margin:14px 0}
-  .stat{display:flex;gap:18px;flex-wrap:wrap;margin:30px 0}
-  .stat .b{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
-  .stat .n{font-size:26px;font-weight:700}
-  .stat .n.bad{color:var(--bad)} .stat .n.good{color:var(--good)}
-  .stat .l{color:var(--mut);font-size:13px;margin-top:2px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:22px 0}
-  code{background:#0e1320;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:14px;color:#cdd6e4}
-  ul{padding-left:20px} li{margin:7px 0}
-  .moat{border-left:3px solid var(--good)}
-  a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
-  .cta{margin-top:46px;background:linear-gradient(180deg,#141a27,#0e1320);border:1px solid var(--line);border-radius:16px;padding:28px}
-  .btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-  .btn{display:inline-block;background:var(--acc);color:#06122b;font-weight:600;padding:11px 18px;border-radius:10px}
-  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-  .foot{color:var(--mut);font-size:13px;margin-top:60px;border-top:1px solid var(--line);padding-top:18px}
-  .tag{display:inline-block;background:#0e1320;border:1px solid var(--line);color:var(--mut);font-size:12px;border-radius:999px;padding:3px 10px;margin:2px 4px 2px 0}
+:root{
+  --black:#000;--surface:#111;--border:#222;--border-v:#333;
+  --t-disabled:#666;--t-sec:#999;--t-pri:#E8E8E8;--t-disp:#fff;
+  --accent:#D71921;--success:#4A9E5C;
+  --g:"Space Grotesk","DM Sans",system-ui,sans-serif;
+  --m:"Space Mono","JetBrains Mono",monospace;
+  --d:"Doto",var(--m);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--black);color:var(--t-pri);font-family:var(--g);font-weight:300;line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:880px;margin:0 auto;padding:28px 28px 120px}
+a{color:inherit;text-decoration:none}
+.label{font-family:var(--m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--t-sec);font-weight:400}
+
+/* top bar */
+.top{display:flex;justify-content:space-between;align-items:center;padding-bottom:96px}
+.top .r{color:var(--t-disp)}
+
+/* hero */
+.hero h1{font-family:var(--g);font-weight:300;font-size:34px;line-height:1.12;letter-spacing:-.02em;color:var(--t-disp);max-width:18ch}
+.big{font-family:var(--d);font-weight:700;font-size:clamp(96px,22vw,200px);line-height:.9;letter-spacing:-.04em;color:var(--accent);margin:18px 0 22px;display:block}
+.lede{font-size:17px;color:var(--t-sec);max-width:46ch;line-height:1.55}
+
+/* stat panel */
+.panel{margin:64px 0 0;border-top:1px solid var(--border)}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:18px;
+  padding:18px 0;border-bottom:1px solid var(--border)}
+.row .v{font-family:var(--m);font-weight:700;font-size:22px;letter-spacing:-.01em;white-space:nowrap}
+.row .v.bad{color:var(--accent)} .row .v.good{color:var(--success)} .row .v.neu{color:var(--t-disp)}
+.row .k{font-family:var(--m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--t-sec);text-align:right}
+
+/* sections */
+section{margin-top:64px}
+.sec-no{font-family:var(--m);font-size:11px;letter-spacing:.1em;color:var(--t-disabled)}
+h2{font-family:var(--g);font-weight:400;font-size:22px;letter-spacing:-.01em;color:var(--t-disp);margin:8px 0 16px}
+p{font-size:16px;color:var(--t-pri);max-width:62ch;margin:12px 0}
+em{color:var(--t-disp);font-style:normal;border-bottom:1px solid var(--border-v)}
+.list{list-style:none;max-width:64ch;margin-top:8px}
+.list li{position:relative;padding:10px 0 10px 22px;border-bottom:1px solid var(--border);color:var(--t-pri);font-size:15px}
+.list li:before{content:"";position:absolute;left:0;top:18px;width:6px;height:6px;background:var(--t-disabled)}
+.list li b{color:var(--t-disp);font-weight:500}
+
+/* tags */
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+.tag{font-family:var(--m);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--t-sec);
+  border:1px solid var(--border-v);padding:6px 10px}
+
+/* cta */
+.cta{margin-top:80px;border-top:1px solid var(--border-v);padding-top:40px}
+.cta .big-line{font-family:var(--g);font-weight:300;font-size:26px;line-height:1.25;letter-spacing:-.015em;color:var(--t-disp);max-width:24ch}
+.cta p{color:var(--t-sec);margin-top:14px}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.btn{font-family:var(--m);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:13px 20px;
+  border:1px solid var(--border-v);color:var(--t-disp);transition:border-color .2s ease,color .2s ease}
+.btn:hover{border-color:var(--t-sec)}
+.btn.solid{background:var(--t-disp);color:var(--black);border-color:var(--t-disp)}
+.btn.solid:hover{background:var(--t-pri);border-color:var(--t-pri)}
+.btn .ar{color:var(--t-disabled);margin-left:6px}
+.btn.solid .ar{color:#444}
+
+.foot{margin-top:80px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+@media(max-width:560px){
+  .top{padding-bottom:56px}
+  .row{flex-direction:column;align-items:flex-start;gap:4px}
+  .row .k{text-align:left}
+  .hero h1{font-size:28px}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="eyebrow">Case study · Quant trading systems</div>
-  <h1>The backtest said <span style="color:var(--good)">+profit</span>.<br>438 independent samples said <span style="color:var(--bad)">-$974</span>.</h1>
-  <p class="lede">How I catch overfit trading strategies <em>before</em> they reach live capital — and why most freelance "trading bots" blow up that don't.</p>
 
-  <div class="stat">
-    <div class="b"><div class="n good">78 / 140</div><div class="l">trades positive — in-sample</div></div>
-    <div class="b"><div class="n bad">-$974</div><div class="l">same "edge", 438 independent samples</div></div>
-    <div class="b"><div class="n">300+</div><div class="l">independent-sample gate now required</div></div>
+  <div class="top">
+    <span class="label">Case study — Quant trading systems</span>
+    <span class="label r">zerotodaa</span>
   </div>
 
-  <h2>The trap</h2>
-  <p>A leveraged crypto strategy backtested beautifully: 78 of 140 trades green, a clean equity curve, a healthy-looking Sharpe. Out-of-sample splits passed. The p-values looked significant. Everything a normal backtest checks said <em>ship it</em>.</p>
-  <p>It was a mirage. On a larger, truly <strong>independent</strong> sample of 438 trades, the same rules reversed to <strong>-$974</strong>. The "edge" was small-sample overfitting — and the standard guards (a single OOS split, nominal p-values) were fooled right along with it.</p>
+  <div class="hero">
+    <h1>The backtest said +profit. 438 independent samples said</h1>
+    <span class="big">−$974</span>
+    <p class="lede">How I catch overfit trading strategies before they reach live capital — and why most "trading bots" that don't, blow up.</p>
+  </div>
 
-  <h2>Why it fooled the usual checks</h2>
-  <ul>
-    <li><strong>Small-sample luck</strong> looks identical to skill until the sample gets big.</li>
-    <li><strong>Multiple testing:</strong> try enough configs and the best one is noise dressed as alpha.</li>
-    <li><strong>One OOS split isn't enough</strong> — and a raw Sharpe says nothing once you account for how many things you tried.</li>
-  </ul>
+  <div class="panel">
+    <div class="row"><span class="v good">78 / 140</span><span class="k">Trades green · in-sample</span></div>
+    <div class="row"><span class="v bad">−$974</span><span class="k">Same edge · 438 independent samples</span></div>
+    <div class="row"><span class="v neu">300+</span><span class="k">Independent-sample gate · now required</span></div>
+  </div>
 
-  <h2 class="moat" style="border:0">What I build instead — an honest-evaluation gate</h2>
-  <div class="card moat">
-    <p style="margin-top:0">I treat "does this edge survive?" as the deliverable, not the pretty equity curve. The gate I build into every system:</p>
-    <ul>
-      <li><strong>Nested cross-validation</strong> with a leakage guard — tune only on inner folds, score once on untouched data.</li>
-      <li><strong>Deflated &amp; Probabilistic Sharpe (PSR/DSR)</strong> — corrects the Sharpe for the number of configs tried and for fat tails.</li>
-      <li><strong>Probability of Backtest Overfitting (PBO)</strong> via combinatorial CV.</li>
-      <li><strong>A 300+ independent-sample gate</strong> — no edge is "real" until it survives one.</li>
-      <li>Realistic <strong>fills, slippage, funding, and liquidation modeling</strong> — most backtest engines silently skip funding and never liquidate, so they overstate every leveraged result.</li>
+  <section>
+    <span class="sec-no">01</span>
+    <h2>The trap</h2>
+    <p>A leveraged crypto strategy backtested beautifully: 78 of 140 trades green, a clean equity curve, a healthy Sharpe. The out-of-sample split passed. The p-values looked significant. Everything a normal backtest checks said <em>ship it</em>.</p>
+    <p>It was a mirage. On a larger, truly independent sample of 438 trades, the same rules reversed to <em>−$974</em>. The edge was small-sample overfitting — and the standard guards were fooled right along with it.</p>
+  </section>
+
+  <section>
+    <span class="sec-no">02</span>
+    <h2>Why it fooled the usual checks</h2>
+    <ul class="list">
+      <li><b>Small-sample luck</b> looks identical to skill until the sample gets big.</li>
+      <li><b>Multiple testing</b> — try enough configs and the best one is noise wearing a Sharpe ratio.</li>
+      <li><b>One out-of-sample split isn't enough</b>, and a raw Sharpe says nothing once you count how many things you tried.</li>
     </ul>
-  </div>
+  </section>
 
-  <h2>Proof it isn't just theory</h2>
-  <p>I recently rebuilt a Binance BTC perpetual strategy on a clean event-driven engine with this gate wired in. The verdict it returned: <strong>NO ROBUST EDGE AFTER DEFLATION</strong> — PBO 0.59, only 79 independent trades (below the 300 gate). The gate <em>blocked promotion to live</em>. That is the system working: it refused to risk real money on a number that looked good and wasn't.</p>
-  <p>A losing backtest you trusted costs you everything. A winning backtest you <em>didn't</em> verify costs you more. The value is the verification.</p>
+  <section>
+    <span class="sec-no">03</span>
+    <h2>What I build instead — an honest-evaluation gate</h2>
+    <ul class="list">
+      <li><b>Nested cross-validation</b> with a leakage guard — tune on inner folds, score once on untouched data.</li>
+      <li><b>Deflated &amp; Probabilistic Sharpe</b> — corrects for the number of configs tried and for fat tails.</li>
+      <li><b>Probability of Backtest Overfitting (PBO)</b> via combinatorial CV.</li>
+      <li><b>A 300+ independent-sample gate</b> — no edge is real until it survives one.</li>
+      <li><b>Real fills, slippage, funding and liquidation modeling</b> — most engines silently skip funding and never liquidate, so they overstate every leveraged result.</li>
+    </ul>
+  </section>
 
-  <div style="margin-top:26px">
-    <span class="tag">NautilusTrader</span><span class="tag">Python</span><span class="tag">Binance / Hyperliquid APIs</span><span class="tag">Backtest realism</span><span class="tag">Deflated Sharpe · PBO</span><span class="tag">Liquidation / funding modeling</span>
-  </div>
+  <section>
+    <span class="sec-no">04</span>
+    <h2>Proof it isn't just theory</h2>
+    <p>I rebuilt a Binance BTC perpetual strategy on a clean event-driven engine with this gate wired in. The verdict it returned: <em>NO ROBUST EDGE AFTER DEFLATION</em> — PBO 0.59, only 79 independent trades against the 300 gate. The gate blocked promotion to live. That is the system working: it refused to risk real money on a number that looked good and wasn't.</p>
+    <div class="tags">
+      <span class="tag">NautilusTrader</span><span class="tag">Python</span><span class="tag">Binance / Hyperliquid</span><span class="tag">Backtest realism</span><span class="tag">Deflated Sharpe · PBO</span><span class="tag">Liquidation / funding</span>
+    </div>
+  </section>
 
   <div class="cta">
-    <div style="font-size:20px;font-weight:700">I build trading infrastructure that survives contact with reality.</div>
-    <p style="color:var(--mut);margin:8px 0 0">Event-driven backtesting with real fill/slippage/funding/liquidation modeling, honest-evaluation gates, and low-latency exchange integration. <strong>You own the strategy and the P&amp;L — I build the engine that tells you the truth about it.</strong></p>
+    <div class="big-line">I build trading infrastructure that survives contact with reality.</div>
+    <p>You own the strategy and the P&amp;L. I build the engine that tells you the truth about it — event-driven backtesting, honest-evaluation gates, and low-latency exchange integration.</p>
     <div class="btns">
-      <a class="btn" href="__CONTACT__">Work with me</a>
-      <a class="btn ghost" href="https://github.com/zerotodaa">GitHub</a>
+      <a class="btn solid" href="mailto:zerotodaa@icloud.com">Work with me<span class="ar">→</span></a>
+      <a class="btn" href="https://x.com/zerotodaa" target="_blank" rel="noopener">X / @zerotodaa<span class="ar">↗</span></a>
+      <a class="btn" href="https://github.com/zerotodaa" target="_blank" rel="noopener">GitHub<span class="ar">↗</span></a>
     </div>
-    <p style="color:var(--mut);font-size:12px;margin-top:14px">(Edit <code>__CONTACT__</code> above to your email / X / Contra link before sharing.)</p>
   </div>
 
-  <div class="foot">zerotodaa — quant &amp; trading-systems engineer. Numbers in this case study are from real evaluation runs. I don't sell signals or manage funds; I build and validate infrastructure.</div>
+  <div class="foot">
+    <span class="label">zerotodaa — quant &amp; trading-systems engineer</span>
+    <span class="label">No signals · no fund management · infrastructure only</span>
+  </div>
+
 </div>
 </body>
 </html>
